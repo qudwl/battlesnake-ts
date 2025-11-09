@@ -10,6 +10,7 @@
 // To get you started we've included code to prevent your Battlesnake from moving backwards.
 // For more info see docs.battlesnake.com
 
+import { collide } from "./methods";
 import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse } from "./types";
 
@@ -77,7 +78,17 @@ function move(gameState: GameState): MoveResponse {
   else if (myHead.y === boardHeight - 1) isMoveSafe.up = false;
 
   // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-  // myBody = gameState.you.body;
+  const myBody = gameState.you.body;
+
+  for (const bodyPiece of myBody) {
+    const [left, right] = collide(myHead.x, bodyPiece.x);
+    if (!left) isMoveSafe.left = false;
+    if (!right) isMoveSafe.right = false;
+
+    const [up, down] = collide(myHead.y, bodyPiece.y);
+    if (!up) isMoveSafe.up = false;
+    if (!down) isMoveSafe.down = false;
+  }
 
   // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
   // opponents = gameState.board.snakes;
