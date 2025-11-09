@@ -71,6 +71,7 @@ function move(gameState: GameState): MoveResponse {
   const boardWidth = gameState.board.width;
   const boardHeight = gameState.board.height;
 
+  // Seeing if on border
   if (myHead.x === 0) isMoveSafe.left = false;
   else if (myHead.x === boardWidth - 1) isMoveSafe.right = false;
 
@@ -80,14 +81,32 @@ function move(gameState: GameState): MoveResponse {
   // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
   const myBody = gameState.you.body;
 
-  for (const bodyPiece of myBody) {
-    const [left, right] = collide(myHead.x, bodyPiece.x);
-    if (!left) isMoveSafe.left = false;
-    if (!right) isMoveSafe.right = false;
+  const hasOnLeft =
+    myBody.find((pos) => pos.x === myHead.x - 1 && pos.y === myHead.y) !==
+    undefined;
+  if (hasOnLeft) {
+    isMoveSafe.left = false;
+  }
 
-    const [up, down] = collide(myHead.y, bodyPiece.y);
-    if (!up) isMoveSafe.up = false;
-    if (!down) isMoveSafe.down = false;
+  const hasOnRight =
+    myBody.find((pos) => pos.x === myHead.x + 1 && pos.y === myHead.y) !==
+    undefined;
+  if (hasOnRight) {
+    isMoveSafe.right = false;
+  }
+
+  const hasOnUp =
+    myBody.find((pos) => pos.x === myHead.x && pos.y === myHead.y + 1) !==
+    undefined;
+  if (hasOnUp) {
+    isMoveSafe.up = false;
+  }
+
+  const hasOnDown =
+    myBody.find((pos) => pos.x === myHead.x && pos.y === myHead.y - 1) !==
+    undefined;
+  if (hasOnDown) {
+    isMoveSafe.down = false;
   }
 
   // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
