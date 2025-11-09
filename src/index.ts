@@ -10,9 +10,21 @@
 // To get you started we've included code to prevent your Battlesnake from moving backwards.
 // For more info see docs.battlesnake.com
 
-import { collide } from "./methods";
+import {
+  collide,
+  findClosestFood,
+  getDirection,
+  getIntersection,
+} from "./methods";
 import runServer from "./server";
-import { GameState, InfoResponse, Move, MoveKeys, MoveResponse } from "./types";
+import {
+  Coord,
+  GameState,
+  InfoResponse,
+  Move,
+  MoveKeys,
+  MoveResponse,
+} from "./types";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -89,20 +101,18 @@ function move(gameState: GameState): MoveResponse {
     if (!safeDirections[direction]) isMoveSafe[direction] = false;
   }
 
-  // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
+  // Prevent your Battlesnake from colliding with other Battlesnakes
   const myName = gameState.you.name;
   const opponents = gameState.board.snakes.filter(
     (snake) => snake.name !== myName
   );
 
-  const opponentDirections: Move[] = [];
   for (const snake of opponents) {
-    const head = snake.head;
-    const body = snake.body;
-    const directions = collide(myHead, body);
+    const enemyBody = snake.body;
+    const directions = collide(myHead, enemyBody);
 
     for (const direction of possibleMoves) {
-      if (!safeDirections[direction]) isMoveSafe[direction] = false;
+      if (!directions[direction]) isMoveSafe[direction] = false;
     }
   }
 
@@ -114,10 +124,22 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Choose a random move from the safe moves
-  const nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
 
   // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-  // food = gameState.board.food;
+  const food: Coord[] = gameState.board.food;
+  const closestFood: Coord = food[findClosestFood(myHead, food)];
+  const foodDirections: Move = getDirection(myHead, closestFood);
+  const moveTowardsFood: MoveKeys[] = possibleMoves.filter(
+    (direction) => foodDirections[direction]
+  );
+
+  const safeAndFood: MoveKeys[] = getIntersection(safeMoves, moveTowardsFood);
+
+  const nextMove =
+    safeAndFood.length > 0
+      ? safeAndFood[Math.floor(Math.random() * safeAndFood.length)]
+      : safeMoves[Math.floor(Math.random() * safeMoves.length)];
+
   console.log(`Current Head: ${myHead.x},${myHead.y}`);
   console.log(`MOVE ${gameState.turn}: ${nextMove}`);
   return { move: nextMove };
