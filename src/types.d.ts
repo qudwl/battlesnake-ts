@@ -75,3 +75,12 @@ export interface MoveResponse {
   move: string;
   shout?: string;
 }
+
+export interface Move {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+}
+
+export type MoveKeys = keyof Move;

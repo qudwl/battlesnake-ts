@@ -12,7 +12,7 @@
 
 import { collide } from "./methods";
 import runServer from "./server";
-import { GameState, InfoResponse, MoveResponse } from "./types";
+import { GameState, InfoResponse, Move, MoveKeys, MoveResponse } from "./types";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -39,11 +39,13 @@ function end(gameState: GameState): void {
   console.log("GAME OVER\n");
 }
 
+const possibleMoves: MoveKeys[] = ["up", "down", "left", "right"];
+
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
 function move(gameState: GameState): MoveResponse {
-  let isMoveSafe: { [key: string]: boolean } = {
+  let isMoveSafe: Move = {
     up: true,
     down: true,
     left: true,
@@ -81,39 +83,31 @@ function move(gameState: GameState): MoveResponse {
   // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
   const myBody = gameState.you.body;
 
-  const hasOnLeft =
-    myBody.find((pos) => pos.x === myHead.x - 1 && pos.y === myHead.y) !==
-    undefined;
-  if (hasOnLeft) {
-    isMoveSafe.left = false;
-  }
+  const safeDirections = collide(myHead, myBody);
 
-  const hasOnRight =
-    myBody.find((pos) => pos.x === myHead.x + 1 && pos.y === myHead.y) !==
-    undefined;
-  if (hasOnRight) {
-    isMoveSafe.right = false;
-  }
-
-  const hasOnUp =
-    myBody.find((pos) => pos.x === myHead.x && pos.y === myHead.y + 1) !==
-    undefined;
-  if (hasOnUp) {
-    isMoveSafe.up = false;
-  }
-
-  const hasOnDown =
-    myBody.find((pos) => pos.x === myHead.x && pos.y === myHead.y - 1) !==
-    undefined;
-  if (hasOnDown) {
-    isMoveSafe.down = false;
+  for (const direction of possibleMoves) {
+    if (!safeDirections[direction]) isMoveSafe[direction] = false;
   }
 
   // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-  // opponents = gameState.board.snakes;
+  const myName = gameState.you.name;
+  const opponents = gameState.board.snakes.filter(
+    (snake) => snake.name !== myName
+  );
+
+  const opponentDirections: Move[] = [];
+  for (const snake of opponents) {
+    const head = snake.head;
+    const body = snake.body;
+    const directions = collide(myHead, body);
+
+    for (const direction of possibleMoves) {
+      if (!safeDirections[direction]) isMoveSafe[direction] = false;
+    }
+  }
 
   // Are there any safe moves left?
-  const safeMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key]);
+  const safeMoves = possibleMoves.filter((direction) => isMoveSafe[direction]);
   if (safeMoves.length == 0) {
     console.log(`MOVE ${gameState.turn}: No safe moves detected! Moving down`);
     return { move: "down" };
